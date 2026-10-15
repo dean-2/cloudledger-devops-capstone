@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -19,9 +19,14 @@ RUN groupadd -r appgroup && useradd -r -g appgroup -d /app -s /sbin/nologin appu
 
 COPY requirements.txt .
 
-# Upgrade pip, setuptools, and wheel to remediate standard Python image CVEs
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir --upgrade -r requirements.txt
+# Install runtime dependencies, then remove pip/setuptools/wheel build tools so pip/_vendor CVEs cannot exist at runtime
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir --upgrade -r requirements.txt && \
+    python -m pip uninstall -y pip setuptools wheel && \
+    rm -rf /usr/local/lib/python*/ensurepip \
+           /usr/local/lib/python*/site-packages/pip* \
+           /usr/local/lib/python*/site-packages/setuptools* \
+           /usr/local/lib/python*/site-packages/wheel*
 
 COPY . .
 
