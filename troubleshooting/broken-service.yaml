@@ -1,0 +1,15 @@
+# Scenario 2: Deliberate Service Endpoint mismatch (selector label typo)
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudledger-broken-svc
+  namespace: cloudledger
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+  selector:
+    # Mismatch: actual pods have label "app: cloudledger-backend"
+    app: cloudledger-backend-typo-selector

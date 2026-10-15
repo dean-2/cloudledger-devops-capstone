@@ -1,0 +1,23 @@
+# Scenario 1: Deliberate ImagePullBackOff caused by non-existent image tag
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudledger-broken-worker
+  namespace: cloudledger
+  labels:
+    app: cloudledger-broken-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloudledger-broken-worker
+  template:
+    metadata:
+      labels:
+        app: cloudledger-broken-worker
+    spec:
+      containers:
+        - name: worker
+          image: ghcr.io/utkarshraj/cloudledger-backend:non-existent-broken-tag-999
+          ports:
+            - containerPort: 8000

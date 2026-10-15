@@ -1,0 +1,18 @@
+apiVersion: [monitoring.coreos.com/v1](https://monitoring.coreos.com/v1)
+kind: ServiceMonitor
+metadata:
+  name: cloudledger-backend-monitor
+  namespace: monitoring
+  labels:
+    release: monitoring
+spec:
+  namespaceSelector:
+    matchNames:
+      - cloudledger
+  selector:
+    matchLabels:
+      app: cloudledger-backend
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
