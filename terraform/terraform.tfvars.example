@@ -1,0 +1,12 @@
+# Copy to terraform.tfvars if customizing locally (never commit secrets or AWS keys)
+aws_region           = "ap-south-1"
+project_name         = "cloudledger"
+environment          = "production"
+vpc_cidr             = "10.20.0.0/16"
+public_subnet_cidrs  = ["10.20.1.0/24", "10.20.2.0/24"]
+private_subnet_cidrs = ["10.20.11.0/24", "10.20.12.0/24"]
+cluster_version      = "1.30"
+node_instance_types  = ["t3.medium"]
+desired_capacity     = 2
+min_capacity         = 2
+max_capacity         = 4
