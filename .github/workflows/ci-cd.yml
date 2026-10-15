@@ -73,7 +73,7 @@ jobs:
           docker build -t ${{ env.REGISTRY }}/${{ steps.owner.outputs.repo_owner }}/cloudledger-frontend:${{ github.sha }} ./frontend
 
       - name: Run Trivy Vulnerability Scanner on Backend Image
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ env.REGISTRY }}/${{ steps.owner.outputs.repo_owner }}/cloudledger-backend:${{ github.sha }}
           format: "table"
@@ -83,7 +83,7 @@ jobs:
           severity: "CRITICAL,HIGH"
 
       - name: Run Trivy Vulnerability Scanner on Frontend Image
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ env.REGISTRY }}/${{ steps.owner.outputs.repo_owner }}/cloudledger-frontend:${{ github.sha }}
           format: "table"
