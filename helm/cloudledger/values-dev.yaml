@@ -1,0 +1,20 @@
+namespace: cloudledger
+
+backend:
+  replicaCount: 2
+  image:
+    pullPolicy: IfNotPresent
+
+frontend:
+  replicaCount: 2
+  image:
+    pullPolicy: IfNotPresent
+
+postgres:
+  storage: 1Gi
+
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 65
