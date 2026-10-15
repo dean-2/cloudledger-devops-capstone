@@ -3,7 +3,7 @@ namespace: cloudledger
 backend:
   replicaCount: 2
   image:
-    repository: ghcr.io/utkarshraj/cloudledger-backend
+    repository: ghcr.io/dean-2/cloudledger-backend
     tag: "latest"
     pullPolicy: IfNotPresent
   service:
@@ -20,7 +20,7 @@ backend:
 frontend:
   replicaCount: 2
   image:
-    repository: ghcr.io/utkarshraj/cloudledger-frontend
+    repository: ghcr.io/dean-2/cloudledger-frontend
     tag: "latest"
     pullPolicy: IfNotPresent
   service:
