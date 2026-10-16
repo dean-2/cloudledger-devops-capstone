@@ -1,4 +1,4 @@
-apiVersion: [monitoring.coreos.com/v1](https://monitoring.coreos.com/v1)
+apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: cloudledger-backend-monitor
@@ -16,3 +16,4 @@ spec:
     - port: http
       path: /metrics
       interval: 15s
+      

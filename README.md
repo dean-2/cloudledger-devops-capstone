@@ -2,6 +2,9 @@
 
 CloudLedger is a full-stack FinOps & Cloud Infrastructure Cost-Auditing platform built for the **Session 21 DevOps Final Capstone Project**. Engineering and SRE teams use CloudLedger to audit multi-cloud (`AWS`, `GCP`, `Azure`) monthly burn, identify idle zombie assets and over-provisioned resources, and track real-time optimization health.
 
+> 🎥 **Final Presentation Deck (PPTX) & Live Demo Video:**
+> - **Google Drive Folder (Slide Deck + Demo Recording):** [Click Here to View Presentation & Demo Video](<YOUR_GOOGLE_DRIVE_FOLDER_LINK>)
+
 ---
 
 ## 1. System Architecture
@@ -9,11 +12,11 @@ CloudLedger is a full-stack FinOps & Cloud Infrastructure Cost-Auditing platform
 | Layer | Technology Stack | Key Features |
 | :--- | :--- | :--- |
 | **Frontend** | React 18, Vite 5, Nginx 1.27 (`alpine`) | FinOps KPI cards, multi-cloud filters, audit ledger, non-root multi-stage container (`USER nginx`) |
-| **Backend** | Python 3.11, FastAPI, SQLAlchemy 2, Alembic | 6 REST CRUD + aggregation endpoints, `/health`, `/ready`, `/metrics`, non-root container (`USER appuser`) |
+| **Backend** | Python 3.12, FastAPI, SQLAlchemy 2, Alembic | 6 REST CRUD + aggregation endpoints, `/health`, `/ready`, `/metrics`, non-root container (`USER appuser`) |
 | **Database** | PostgreSQL 15 (`alpine`) + SQLite (Tests) | `cloud_resources` schema managed via Alembic (`0001_create_cloud_resources.py`) + auto-seeding |
 | **CI/CD & DevSecOps** | GitHub Actions, GHCR, Aqua Trivy | Automated Pytest + Vite build, Trivy `HIGH`/`CRITICAL` gate (`exit-code: 1`), SHA-tagged GHCR images |
 | **Cloud IaC** | Terraform (`>= 1.5`, AWS Provider `~> 5.50`) | Custom VPC (`10.20.0.0/16`), 2 Public + 2 Private Subnets, NAT Gateway, EKS 1.30 Managed Node Group in `ap-south-1` |
-| **Orchestration** | Kubernetes, Helm 3, NGINX Ingress, HPA | 2x Backend & 2x Frontend replicas, PostgreSQL PVC, Ingress `/api` & `/` routing, CPU-based HPA |
+| **Orchestration** | Kubernetes (EKS / Kind), Helm 3, Ingress, HPA | 2x Backend & 2x Frontend replicas, PostgreSQL PVC, Ingress `/api` & `/` routing, CPU-based HPA |
 | **Observability** | Prometheus & Grafana (`kube-prometheus-stack`) | `prometheus-fastapi-instrumentator` on `/metrics`, `ServiceMonitor` 15s scrape, live Grafana dashboards |
 
 ---
@@ -65,44 +68,55 @@ All 6 test cases in `backend/tests/test_api.py` use an isolated in-memory SQLite
 
 ---
 
-## 5. Provisioning AWS VPC & EKS with Terraform (`ap-south-1`)
+## 5. CI/CD Pipeline & Trivy DevSecOps Scanning
+
+On every push to `main`, `.github/workflows/ci-cd.yml` runs two sequential jobs:
+1. **`test-and-build-check`**: Runs the 6 isolated `pytest` tests and compiles the React + Vite production bundle (`npm run build`).
+2. **`docker-trivy-and-publish`**: Builds `cloudledger-backend` (`python:3.12-slim`) and `cloudledger-frontend` (`nginx:1.27-alpine`), scans both images with **Aqua Trivy** (`severity: CRITICAL,HIGH`, `exit-code: 1`), and pushes immutable Git SHA-tagged images (`:${{ github.sha }}`) to GitHub Container Registry (`ghcr.io/dean-2/cloudledger-backend` & `ghcr.io/dean-2/cloudledger-frontend`).
+
+---
+
+## 6. Provisioning AWS VPC & EKS with Terraform (`ap-south-1`)
+
+> **Cloud Environment Notice:** If running in an organizational AWS account with a Service Control Policy (SCP) explicit deny on VPC/EC2 creation, validate locally via `terraform init`, `terraform fmt -check`, and `terraform validate`, and deploy Kubernetes manifests to a local **Kind** cluster (`kind create cluster --name cloudledger-cluster`).
 
 ```bash
 cd terraform
 terraform init
+terraform fmt -check
 terraform validate
+
+# For unrestricted AWS environments:
 terraform plan -out=tfplan
 terraform apply tfplan
-
-# Configure kubectl for the new EKS cluster
 aws eks update-kubeconfig --region ap-south-1 --name cloudledger-eks-cluster
 ```
 
-> **Cost Safety Reminder:** Always tear down AWS EKS and NAT Gateway resources immediately after capturing verification screenshots:
+> **Cost Safety Reminder:** Always tear down AWS EKS and NAT Gateway resources immediately after verification:
 > ```bash
 > terraform destroy -auto-approve
 > ```
 
 ---
 
-## 6. Deploying with Kubernetes & Helm
+## 7. Deploying with Kubernetes & Helm
 
 ```bash
 kubectl apply -f k8s/namespace.yaml
 
 helm upgrade --install cloudledger ./helm/cloudledger \
   --namespace cloudledger \
-  --set backend.image.repository=ghcr.io/<your-github-username>/cloudledger-backend \
-  --set backend.image.tag=<git-commit-sha> \
-  --set frontend.image.repository=ghcr.io/<your-github-username>/cloudledger-frontend \
-  --set frontend.image.tag=<git-commit-sha>
+  --set backend.image.repository=ghcr.io/dean-2/cloudledger-backend \
+  --set backend.image.tag=f491be481f6358680a26f59556423ed437bf9953 \
+  --set frontend.image.repository=ghcr.io/dean-2/cloudledger-frontend \
+  --set frontend.image.tag=f491be481f6358680a26f59556423ed437bf9953
 
 kubectl get pods,svc,ingress,hpa -n cloudledger
 ```
 
 ---
 
-## 7. Observability: Prometheus & Grafana
+## 8. Observability: Prometheus & Grafana
 
 ```bash
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
@@ -117,7 +131,15 @@ kubectl apply -f monitoring/servicemonitor.yaml
 
 ---
 
-## 8. Module Deliverables Index (`deliverables/`)
+## 9. HPA Scaling & Kubernetes Troubleshooting
+
+- **HorizontalPodAutoscaler (`helm/cloudledger/templates/hpa.yaml`):** Scales `cloudledger-backend` between `2` and `5` replicas at `70%` CPU utilization. Load can be generated using `./scripts/load-test.sh http://localhost:8000/api/resources/stats 60`.
+- **Scenario 1 — `troubleshooting/broken-image.yaml` (`ImagePullBackOff`):** Deploys a pod with a non-existent image tag (`:non-existent-broken-tag-999`). Diagnose with `kubectl describe pod -n cloudledger -l app=cloudledger-broken-worker` and remediate live via `kubectl set image`.
+- **Scenario 2 — `troubleshooting/broken-service.yaml` (`0 Endpoints`):** Deploys a service with a mismatched selector (`app: cloudledger-backend-typo-selector`). Diagnose via `kubectl get endpoints cloudledger-broken-svc -n cloudledger` (`<none>`) and remediate live via `kubectl patch svc`.
+
+---
+
+## 10. Module Deliverables Index (`deliverables/`)
 
 - [M1 — Application: Frontend + Backend + Database](./deliverables/M1.md)
 - [M2 — Testing: Pytest + Code Quality](./deliverables/M2.md)

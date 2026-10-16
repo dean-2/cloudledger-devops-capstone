@@ -6,27 +6,16 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install latest Debian security patches
 RUN apt-get update && \
     apt-get upgrade -y && \
-    apt-get dist-upgrade -y && \
-    apt-get autoremove -y && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Create non-root group and user
 RUN groupadd -r appgroup && useradd -r -g appgroup -d /app -s /sbin/nologin appuser
 
 COPY requirements.txt .
-
-# Install runtime dependencies, then remove pip/setuptools/wheel build tools so pip/_vendor CVEs cannot exist at runtime
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir --upgrade -r requirements.txt && \
-    python -m pip uninstall -y pip setuptools wheel && \
-    rm -rf /usr/local/lib/python*/ensurepip \
-           /usr/local/lib/python*/site-packages/pip* \
-           /usr/local/lib/python*/site-packages/setuptools* \
-           /usr/local/lib/python*/site-packages/wheel*
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir --upgrade -r requirements.txt
 
 COPY . .
 
