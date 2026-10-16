@@ -2,8 +2,9 @@
 
 CloudLedger is a full-stack FinOps & Cloud Infrastructure Cost-Auditing platform built for the **Session 21 DevOps Final Capstone Project**. Engineering and SRE teams use CloudLedger to audit multi-cloud (`AWS`, `GCP`, `Azure`) monthly burn, identify idle zombie assets and over-provisioned resources, and track real-time optimization health.
 
-> 🎥 **Final Presentation Deck (PPTX) & Live Demo Video:**
-> - **Google Drive Folder (Slide Deck + Demo Recording):** [Click Here to View Presentation & Demo Video](<YOUR_GOOGLE_DRIVE_FOLDER_LINK>)
+> 🔗 **Project Submission Links:**
+> - **GitHub Repository:** [https://github.com/dean-2/cloudledger-devops-capstone](https://github.com/dean-2/cloudledger-devops-capstone)
+> - **Google Drive (PPTX Deck + 2-Min Demo Video):** [Click Here to View Presentation & Demo Video](<https://drive.google.com/drive/folders/1TW8LhFoOcBjlBjoZU-I17uM1dmLRPFBU?usp=sharing>)
 
 ---
 
